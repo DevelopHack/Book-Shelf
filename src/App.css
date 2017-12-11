@@ -181,6 +181,10 @@ body, .app {
 .animate-zoom:hover {animation: animatezoom 2s}
 @keyframes animatezoom {from{transform: scale3d(1,1,1)} to{transform: scale3d(1.1,1.1,1.1)}}
 
+/**
+* This code was take on this web site
+* https://www.w3schools.com/howto/howto_css_star_rating.asp 
+*/
 @import url(//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css);
 
 .checked {
