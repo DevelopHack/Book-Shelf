@@ -8,71 +8,50 @@ import './App.css'
 class BooksApp extends React.Component {
   /**
    * @constructor Represent BooksApp
-   * @param {props} props 
    */
-  constructor(props){
-    super(props);
+  constructor(){
+    super();
     this.state = {
       books: [],
       foundBooks: [],
-      currentlyReadingBooks: [],
-      wantToReadBooks: [],
-      readBooks: []
+      isUpdate: false,  
     }
     this.searchBooks = this.searchBooks.bind(this)
     this.updateBook = this.updateBook.bind(this)
-  }
+  }  
   /**
    * @description Invoke immediately after the component is inserted in the DOM
    */
   componentDidMount(){
-    this.initializeData()
-  }
-  /**
-   * @description Invoke whenever the component is about to recieve brand new props
-   */
-  componentWillReceiveProps(){
-    this.cleanFoundBooks()
-  }
-  /**
-   * @description Get all of books currently in the bookshelves
-   */
-  initializeData(){
     BooksAPI.getAll().then((books) => {
-      this.rebuildArrays(books)
       this.setState({ books })
-    })   
+    })
   }
   /**
-   * @description Rebuild the array of books in each shelf
-   * @param {array} books Array of books
-   */ 
-  rebuildArrays(books){    
-    books.forEach(book => {
-      if(book.shelf === "currentlyReading"){
-        this.setState(prevState =>({
-          currentlyReadingBooks: prevState.currentlyReadingBooks.concat([book])
-        }))              
-      }else if(book.shelf === "wantToRead"){
-        this.setState(prevState =>({
-          wantToReadBooks: prevState.wantToReadBooks.concat([book])
-        }))      
-      }else if(book.shelf === "read"){
-        this.setState(prevState =>({
-          readBooks: prevState.readBooks.concat([book])
-        }))        
-      }
-    })
+   * @description Invoke immediately after updating occurs
+   * @param {object} prevProps 
+   * @param {object} prevState 
+   */
+  componentDidUpdate(prevProps, prevState){
+    if(this.state.foundBooks === prevState.foundBooks && this.state.isUpdate === prevState.isUpdate)
+    { 
+      this.cleanFoundBooks()
+      this.setState({isUpdate: true})  
+    }
   }
   /**
    * @description Search the books that match the query
    * @param {string} query The query of the search
    */
   searchBooks(query){
-    this.cleanFoundBooks() 
-    BooksAPI.search(query).then((foundBooks) => {
-      this.updateFoundBook(foundBooks)
-    })
+    this.cleanFoundBooks()
+    if(query !== '')
+    {    
+      BooksAPI.search(query).then((foundBooks) => {
+        if(foundBooks !== undefined)
+          this.updateFoundBook(foundBooks)
+      })
+    }    
   }
   /**
    * @description Update the array of found books 
@@ -107,35 +86,36 @@ class BooksApp extends React.Component {
    * @param {object} book - The book object
    * @param {string} shelf - The new shelf 
    */
-  updateBook(book,shelf){
+  updateBook(book, shelf){
     this.setState({
       currentlyReadingBooks: [],
       wantToReadBooks: [],
       readBooks: [],
-      books: []     
-    }) 
-    BooksAPI.update(book,shelf)
-    this.initializeData()
-    this.cleanFoundBooks()
-  }
+      isUpdate: false    
+    })
+    if(book.shelf !== shelf){
+      BooksAPI.update(book, shelf).then(() => {
+        book.shelf = shelf
+        this.setState((prevState) =>({
+          books: prevState.books.filter(b => b.id !== book.id).concat([ book ]),
+          isUpdate: true
+        }))
+      })
+    }  
+  }  
   render(){
     return(      
       <div className="app">
-        <Route path="/search" render={({history}) => (
+        <Route path="/search" render={() => (
           <SearchBook 
             foundBooks={this.state.foundBooks} 
             onSearch={this.searchBooks}
-            onUpdateBook={(book, shelf) =>{
-              this.updateBook(book,shelf)              
-              history.push('/')
-            }} 
+            onUpdateBook={this.updateBook}           
           />
         )}/>
         <Route exact path="/" render={() => (          
           <ListShelves 
-            currentlyReadingBooks={this.state.currentlyReadingBooks}
-            wantToReadBooks={this.state.wantToReadBooks}
-            readBooks={this.state.readBooks}
+            books={this.state.books}            
             onUpdateBook={this.updateBook} 
           />
         )}/>       

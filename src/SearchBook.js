@@ -4,33 +4,42 @@ import PropTypes from 'prop-types'
 import Book from './Book'
 
 class SearchBook extends Component {
+    constructor(){
+        super();
+        this.state = { query: '' }
+
+        this.updateQuery = this.updateQuery.bind(this)
+    }   
+    /**
+     * @description Parameter validation
+     */
     static propTypes = {
         onUpdateBook: PropTypes.func.isRequired,
         foundBooks: PropTypes.array.isRequired
-    }
-    state = {
-        query: ''
-    }
+    }    
     /**
-     * @description Update state
+     * @description Update state and search the books that match the query
      * @param {string} query
      */
-    updateQuery = (query) => {
-        this.setState({ query })
+    updateQuery = (query) => { 
+        this.setState({ query: query.trim() })
     }
     /**
-     * @description Execute the method searchBooks
+     * @description Invoke immediately after updating occurs
+     * @param {object} prevProps 
+     * @param {object} prevState 
      */
-    handleSubmit = (event) => {        
-        event.preventDefault()
-        if(this.props.onSearch)
+    componentDidUpdate(prevProps, prevState){   
+        if(prevState.query !== this.state.query)
+        {
             this.props.onSearch(this.state.query)
+        }
     }
     render(){
         const {onUpdateBook, foundBooks}=this.props
-        const {query}=this.state 
-        return(
-            <div className="search-books">
+        const {query}=this.state           
+        return( 
+            <div className="search-books">            
             <div className="search-books-bar">
                 <Link
                     to={{pathname: "/"}}
@@ -46,15 +55,14 @@ class SearchBook extends Component {
 
                     However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
                     you don't find a specific author or title. Every search is limited by search terms.
-                    */}
-                    <form onSubmit={this.handleSubmit}>
-                        <input 
-                            type="text" 
-                            placeholder="Search by title or author"
-                            value={query}
-                            onChange={(event) => this.updateQuery(event.target.value)}
-                        />
-                    </form>
+                    */}                   
+                    <input 
+                        type="text" 
+                        placeholder="Search by title or author"
+                        value={query}
+                        onChange={(event) => this.updateQuery(event.target.value)}                                                     
+                    />
+                    
                 </div>
             </div>
             <div className="search-books-results">
